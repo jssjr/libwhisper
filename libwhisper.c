@@ -2,6 +2,7 @@
 #define __LIBWHISPER__
 
 #include <stdio.h>
+#include <stdint.h>
 
 struct wsp_header {
   long aggregation_type;
@@ -18,7 +19,7 @@ int wsp_info(FILE *fd) {
   fpos_t original_offset;
   struct wsp_header header;
   int r;
-  char buf[16];
+  uint8_t buf[16];
 
   fgetpos(fd, &original_offset); // XXX: Handle EBADF/EINVAL
   rewind(fd);
