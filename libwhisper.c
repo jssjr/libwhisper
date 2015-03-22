@@ -31,10 +31,14 @@ int wsp_info(FILE *fd, struct wsp_header *header) {
   uint8_t buf[16];
   uint32_t temp;
 
-  fgetpos(fd, &original_offset); // XXX: Handle EBADF/EINVAL
+  if (fgetpos(fd, &original_offset) == -1) {
+    // XXX: Handle EBADF/EINVAL
+    return -1;
+  }
   rewind(fd);
 
-  if (fread(&buf, sizeof(uint8_t), 16, fd) <= 0) {
+  if (fread(&buf, sizeof(uint8_t), 16, fd) == 0) {
+    // XXX: Check if feof or ferror
     return -1;
   }
 
