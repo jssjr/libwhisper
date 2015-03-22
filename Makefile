@@ -1,5 +1,5 @@
 all:
-	gcc -g -o wsptest libwhisper.c
+	gcc -g -Wall -pedantic -o wsptest libwhisper.c
 
 test: all
 	valgrind ./wsptest

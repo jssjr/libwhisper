@@ -27,18 +27,18 @@ int wsp_create() {
 
 int wsp_info(FILE *fd, struct wsp_header *header) {
   fpos_t original_offset;
-  struct wsp_archive_info *archive_info;
   uint8_t buf[16];
   uint32_t temp;
+  int i;
 
   if (fgetpos(fd, &original_offset) == -1) {
-    // XXX: Handle EBADF/EINVAL
+    /* XXX: Handle EBADF/EINVAL */
     return -1;
   }
   rewind(fd);
 
   if (fread(&buf, sizeof(uint8_t), 16, fd) == 0) {
-    // XXX: Check if feof or ferror
+    /* XXX: Check if feof or ferror */
     return -1;
   }
 
@@ -47,12 +47,12 @@ int wsp_info(FILE *fd, struct wsp_header *header) {
   temp = (buf[11]<<0) | (buf[10]<<8) | (buf[9]<<16) | (buf[8]<<24);
   header->xff = *(float*)&temp;
   header->archive_count = (buf[15]<<0) | (buf[14]<<8) | (buf[13]<<16) | (buf[12]<<24);
-  // XXX: assert valid header values here?
+  /* XXX: assert valid header values here? */
   if (header->archive_count <= 0) {
     return -1;
   }
 
-  for (int i = 0 ; i < header->archive_count ; i++) {
+  for (i = 0 ; i < header->archive_count ; i++) {
     if (fread(&buf, sizeof(uint8_t), 12, fd) <= 0) {
       return -1;
     }
@@ -98,11 +98,12 @@ int wsp_validate_archive_list() {
   return 0;
 }
 
-// Main (tests)
+/* Main (tests) */
 int main(int argc, char **argv) {
   FILE *my_file;
   struct wsp_header header;
   char *filename = "test/mem-free.wsp";
+  int i;
 
   printf("whisper info for %s\n", filename);
   my_file = fopen(filename, "rb");
@@ -116,7 +117,7 @@ int main(int argc, char **argv) {
   printf("> xfilesfactor:     %f\n",  header.xff);
   printf("> archive count:    %lu\n", header.archive_count);
 
-  for (int i=0 ; i < header.archive_count ; i++) {
+  for (i=0 ; i < header.archive_count ; i++) {
     printf("> offset:            %lu\n", header.archives[i].offset);
     printf("> seconds per point: %lu\n", header.archives[i].seconds_per_point);
     printf("> points:            %lu\n", header.archives[i].points);
