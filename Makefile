@@ -1,2 +1,2 @@
 all:
-	gcc -o wsptest libwhisper.c
+	gcc -g -o wsptest libwhisper.c
