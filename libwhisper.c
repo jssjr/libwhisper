@@ -4,10 +4,10 @@
 #include <stdio.h>
 
 struct wsp_header {
-  int aggregation_type;
-  unsigned int max_retention;
+  long aggregation_type;
+  long max_retention;
   float xff;
-  int archive_count;
+  long archive_count;
 };
 
 int wsp_create() {
@@ -32,10 +32,10 @@ int wsp_info(FILE *fd) {
   header.archive_count = (buf[15]<<0) | (buf[14]<<8) | (buf[13]<<16) | (buf[12]<<24);
 
   printf("read %d objects\n", r);
-  printf("> aggregation type: %d\n", header.aggregation_type);
-  printf("> max retention:    %d\n", header.max_retention);
+  printf("> aggregation type: %lu\n", header.aggregation_type);
+  printf("> max retention:    %lu\n", header.max_retention);
   printf("> xfilesfactor:     %f\n", header.xff);
-  printf("> archive count:    %d\n", header.archive_count);
+  printf("> archive count:    %lu\n", header.archive_count);
 
   return 0;
 }
