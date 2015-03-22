@@ -28,7 +28,6 @@ int wsp_create() {
 int wsp_info(FILE *fd, struct wsp_header *header) {
   fpos_t original_offset;
   struct wsp_archive_info *archive_info;
-  int r;
   uint8_t buf[16];
   uint32_t temp;
 
