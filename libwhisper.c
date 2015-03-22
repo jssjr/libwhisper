@@ -20,6 +20,7 @@ int wsp_info(FILE *fd) {
   struct wsp_header header;
   int r;
   uint8_t buf[16];
+  uint32_t temp;
 
   fgetpos(fd, &original_offset); // XXX: Handle EBADF/EINVAL
   rewind(fd);
@@ -29,13 +30,14 @@ int wsp_info(FILE *fd) {
   }
   header.aggregation_type = (buf[3]<<0) | (buf[2]<<8) | (buf[1]<<16) | (buf[0]<<24);
   header.max_retention = (buf[7]<<0) | (buf[6]<<8) | (buf[5]<<16) | (buf[4]<<24);
-  header.xff = (buf[11]<<0) | (buf[10]<<8) | (buf[9]<<16) | (buf[8]<<24);
+  temp = (buf[11]<<0) | (buf[10]<<8) | (buf[9]<<16) | (buf[8]<<24);
+  header.xff = *(float*)&temp;
   header.archive_count = (buf[15]<<0) | (buf[14]<<8) | (buf[13]<<16) | (buf[12]<<24);
 
   printf("read %d objects\n", r);
   printf("> aggregation type: %lu\n", header.aggregation_type);
   printf("> max retention:    %lu\n", header.max_retention);
-  printf("> xfilesfactor:     %f\n", header.xff);
+  printf("> xfilesfactor:     %f\n",  header.xff);
   printf("> archive count:    %lu\n", header.archive_count);
 
   return 0;
