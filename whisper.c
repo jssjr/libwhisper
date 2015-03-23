@@ -23,6 +23,12 @@ struct wsp_header {
   struct wsp_archive_info archives[WSP_MAX_ARCHIVES];
 };
 
+int mod(int a, int b)
+{
+  int r = a % b;
+  return r < 0 ? r + b : r;
+}
+
 int wsp_create() {
   return 0;
 }
@@ -84,13 +90,13 @@ int _wsp_fetch_archive(FILE *fd, struct wsp_archive_info *archive, time_t from, 
   long step;
   long points, point_time;
   uint8_t datapoint_buf[WSP_DATAPOINT_SIZE];
-  uint8_t buf[WSP_DATAPOINT_SIZE*4096];
+  uint8_t buf[WSP_DATAPOINT_SIZE*1024];
   uint64_t temp;
   int i;
   long td, pd, bd;
 
-  from_interval = (from - (from % archive->seconds_per_point)) + archive->seconds_per_point;
-  until_interval = (until - (until % archive->seconds_per_point)) + archive->seconds_per_point;
+  from_interval = (from - (mod(from, archive->seconds_per_point))) + archive->seconds_per_point;
+  until_interval = (until - (mod(until, archive->seconds_per_point))) + archive->seconds_per_point;
 
   fseek(fd, archive->offset, SEEK_SET);
   fread(&datapoint_buf, sizeof(uint8_t), WSP_DATAPOINT_SIZE, fd);
@@ -116,16 +122,17 @@ int _wsp_fetch_archive(FILE *fd, struct wsp_archive_info *archive, time_t from, 
   td = from_interval - base_interval;
   pd = td / archive->seconds_per_point;
   bd = pd * WSP_DATAPOINT_SIZE;
-  from_offset = archive->offset + (bd % archive->size);
+  from_offset = archive->offset + mod(bd, archive->size);
 
   td = until_interval - base_interval;
   pd = td / archive->seconds_per_point;
   bd = pd * WSP_DATAPOINT_SIZE;
-  until_offset = archive->offset + (bd % archive->size);
+  until_offset = archive->offset + mod(bd, archive->size);
 
   if (fseek(fd, from_offset, SEEK_SET) == -1) {
     return -1;
   }
+
   if (from_offset < until_offset) {
     /* we don't wrap around the archive */
     if ((fread(&buf, sizeof(uint8_t), until_offset - from_offset, fd)) == 0) {
@@ -244,8 +251,8 @@ int wsp_validate_archive_list() {
 
 /* Main (tests) */
 int main(int argc, char **argv) {
-  FILE *my_file;
-  struct wsp_header header;
+  /*FILE *my_file;*/
+  /*struct wsp_header header;*/
   struct wsp_timeseries ts;
   char *filename = "test/mem-free.wsp";
   int i;
@@ -254,6 +261,7 @@ int main(int argc, char **argv) {
   time_t until;
   time_t pos;
 
+  /*
   printf("whisper info for %s\n", filename);
   my_file = fopen(filename, "rb");
 
@@ -278,7 +286,6 @@ int main(int argc, char **argv) {
   fclose(my_file);
 
 
-  /*
   from = 0;
   time(&until);
   wsp_fetch(filename, from, until, &ts);
@@ -286,7 +293,6 @@ int main(int argc, char **argv) {
     printf("%d\t%f\n", (int)pos, ts.values[i]);
   }
   */
-
 
   time(&from);
   from = from - 3600;
@@ -303,7 +309,6 @@ int main(int argc, char **argv) {
     printf("%d\t%f\n", (int)pos, ts.values[i]);
   }
   free(ts.values);
-
 
   return 0;
 }
