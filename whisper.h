@@ -11,6 +11,7 @@
 #define WSP_DATAPOINT_SIZE 12
 #define WSP_HEADER_SIZE 16
 #define WSP_ARCHIVE_INFO_SIZE 12
+#define WSP_READ_CHUNK_SIZE 1020
 
 #if __BYTE_ORDER == __BIG_ENDIAN
 #define Swap2Bytes(val) val

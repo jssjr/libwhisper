@@ -86,13 +86,13 @@ int wsp_update_many() {
 
 int _wsp_fetch_archive(FILE *fd, struct wsp_archive_info *archive, time_t from, time_t until, struct wsp_timeseries *ts) {
   long from_interval, until_interval, base_interval, current_interval;
-  long from_offset, until_offset;
-  long step;
+  long from_offset, until_offset, buffer_offset;
+  long step, read_size, chunk_size;
   long points, point_time;
   uint8_t datapoint_buf[WSP_DATAPOINT_SIZE];
-  uint8_t buf[WSP_DATAPOINT_SIZE*1024];
+  uint8_t buf[WSP_DATAPOINT_SIZE*WSP_READ_CHUNK_SIZE];
   uint64_t temp;
-  int i;
+  int i, c;
   long td, pd, bd;
 
   from_interval = (from - (mod(from, archive->seconds_per_point))) + archive->seconds_per_point;
@@ -133,39 +133,48 @@ int _wsp_fetch_archive(FILE *fd, struct wsp_archive_info *archive, time_t from, 
     return -1;
   }
 
-  if (from_offset < until_offset) {
-    /* we don't wrap around the archive */
-    if ((fread(&buf, sizeof(uint8_t), until_offset - from_offset, fd)) == 0) {
-      return -1;
-    }
-  } else {
-    /* we wrap around the archive and need second read */
-    fread(&buf, sizeof(uint8_t), ((archive->offset + archive->size) - from_offset), fd);
-    if (fseek(fd, archive->offset, SEEK_SET) == -1) {
-      return -1;
-    }
-    fread(&buf[(archive->offset + archive->size) - from_offset], sizeof(uint8_t), \
-        until_offset - archive->offset, fd);
-  }
+  setvbuf(fd, (char*)NULL, _IOFBF, 0);
 
   current_interval = from_interval;
-  for (i=0;i<points;i++) {
-    point_time = (buf[3+(WSP_DATAPOINT_SIZE*i)]<<0) | \
-                 (buf[2+(WSP_DATAPOINT_SIZE*i)]<<8) | \
-                 (buf[1+(WSP_DATAPOINT_SIZE*i)]<<16) | \
-                 (buf[0+(WSP_DATAPOINT_SIZE*i)]<<24);
-    if (point_time == current_interval) {
-      temp = ((uint64_t)(buf[11+(WSP_DATAPOINT_SIZE*i)])<<0) | \
-             ((uint64_t)(buf[10+(WSP_DATAPOINT_SIZE*i)])<<8) | \
-             ((uint64_t)(buf[9+(WSP_DATAPOINT_SIZE*i)])<<16) | \
-             ((uint64_t)(buf[8+(WSP_DATAPOINT_SIZE*i)])<<24) | \
-             ((uint64_t)(buf[7+(WSP_DATAPOINT_SIZE*i)])<<32) | \
-             ((uint64_t)(buf[6+(WSP_DATAPOINT_SIZE*i)])<<40) | \
-             ((uint64_t)(buf[5+(WSP_DATAPOINT_SIZE*i)])<<48) | \
-             ((uint64_t)(buf[4+(WSP_DATAPOINT_SIZE*i)])<<56);
-      ts->values[i] = *(double*)&temp;
+  i = 0;
+  if (from_offset < until_offset) {
+    /* no need to wrap, chunk it all */
+    chunk_size = until_offset - from_offset;
+  } else {
+    /* wrap around the archive, so only chunk the fist part */
+    chunk_size = archive->offset + archive->size - from_offset;
+  }
+  for (i = 0; i < points;) {
+    if (chunk_size <= 0) {
+      /* second pass */
+      chunk_size = archive->offset + archive->size - from_offset;
+      if (fseek(fd, archive->offset, SEEK_SET) == -1) {
+        return -1;
+      }
     }
-    current_interval += step;
+    read_size = (chunk_size > WSP_READ_CHUNK_SIZE) ? WSP_READ_CHUNK_SIZE : chunk_size;
+    chunk_size = chunk_size - read_size;
+    fread(&buf, read_size, 1, fd);
+    for (c=0;c<(read_size/WSP_DATAPOINT_SIZE);c++) {
+      buffer_offset = WSP_DATAPOINT_SIZE*c;
+      point_time = (buf[3+buffer_offset]<<0) | \
+                   (buf[2+buffer_offset]<<8) | \
+                   (buf[1+buffer_offset]<<16) | \
+                   (buf[0+buffer_offset]<<24);
+      if (point_time == current_interval) {
+        temp = ((uint64_t)(buf[11+buffer_offset])<<0) | \
+               ((uint64_t)(buf[10+buffer_offset])<<8) | \
+               ((uint64_t)(buf[9+buffer_offset])<<16) | \
+               ((uint64_t)(buf[8+buffer_offset])<<24) | \
+               ((uint64_t)(buf[7+buffer_offset])<<32) | \
+               ((uint64_t)(buf[6+buffer_offset])<<40) | \
+               ((uint64_t)(buf[5+buffer_offset])<<48) | \
+               ((uint64_t)(buf[4+buffer_offset])<<56);
+        ts->values[i] = *(double*)&temp;
+      }
+      i += c;
+      current_interval += step;
+    }
   }
 
   return 0;
@@ -285,6 +294,7 @@ int main(int argc, char **argv) {
 
   fclose(my_file);
 
+  */
 
   from = 0;
   time(&until);
@@ -292,7 +302,6 @@ int main(int argc, char **argv) {
   for (i = 0, pos = ts.from ; pos < ts.until ; pos += ts.step, i++) {
     printf("%d\t%f\n", (int)pos, ts.values[i]);
   }
-  */
 
   time(&from);
   from = from - 3600;
