@@ -1,28 +1,5 @@
 #include "whisper.h"
 
-struct wsp_timeseries {
-  time_t from;
-  time_t until;
-  time_t step;
-  double *values;
-};
-
-struct wsp_archive_info {
-  long offset;
-  long seconds_per_point;
-  long points;
-  long retention;
-  long size;
-};
-
-struct wsp_header {
-  long aggregation_type;
-  long max_retention;
-  float xff;
-  long archive_count;
-  struct wsp_archive_info archives[WSP_MAX_ARCHIVES];
-};
-
 int mod(int a, int b)
 {
   int r = a % b;
@@ -53,7 +30,7 @@ int wsp_info(FILE *fd, struct wsp_header *header) {
   header->aggregation_type = (buf[3]<<0) | (buf[2]<<8) | (buf[1]<<16) | (buf[0]<<24);
   header->max_retention = (buf[7]<<0) | (buf[6]<<8) | (buf[5]<<16) | (buf[4]<<24);
   temp = (buf[11]<<0) | (buf[10]<<8) | (buf[9]<<16) | (buf[8]<<24);
-  header->xff = *(float*)&temp;
+  memcpy(&header->xff, &temp, sizeof(uint32_t));
   header->archive_count = (buf[15]<<0) | (buf[14]<<8) | (buf[13]<<16) | (buf[12]<<24);
   /* XXX: assert valid header values here? */
   if (header->archive_count <= 0) {
@@ -61,7 +38,7 @@ int wsp_info(FILE *fd, struct wsp_header *header) {
   }
 
   for (i = 0 ; i < header->archive_count ; i++) {
-    if (fread(&buf, sizeof(uint8_t), WSP_ARCHIVE_INFO_SIZE, fd) <= 0) {
+    if (fread(&buf, sizeof(uint8_t), WSP_ARCHIVE_INFO_SIZE, fd) == 0) {
       return -1;
     }
     header->archives[i].offset = (buf[3]<<0) | (buf[2]<<8) | (buf[1]<<16) | (buf[0]<<24);
@@ -99,7 +76,9 @@ int _wsp_fetch_archive(FILE *fd, struct wsp_archive_info *archive, time_t from, 
   until_interval = (until - (mod(until, archive->seconds_per_point))) + archive->seconds_per_point;
 
   fseek(fd, archive->offset, SEEK_SET);
-  fread(&datapoint_buf, sizeof(uint8_t), WSP_DATAPOINT_SIZE, fd);
+  if (fread(&datapoint_buf, sizeof(uint8_t), WSP_DATAPOINT_SIZE, fd) == 0) {
+    return -1;
+  }
 
   base_interval = (datapoint_buf[3]<<0) | (datapoint_buf[2]<<8) | (datapoint_buf[1]<<16) | (datapoint_buf[0]<<24);
 
@@ -154,7 +133,9 @@ int _wsp_fetch_archive(FILE *fd, struct wsp_archive_info *archive, time_t from, 
     }
     read_size = (chunk_size > WSP_READ_CHUNK_SIZE) ? WSP_READ_CHUNK_SIZE : chunk_size;
     chunk_size = chunk_size - read_size;
-    fread(&buf, read_size, 1, fd);
+    if (fread(&buf, read_size, 1, fd) == 0) {
+      return -1;
+    }
     for (c=0;c<(read_size/WSP_DATAPOINT_SIZE);c++) {
       buffer_offset = WSP_DATAPOINT_SIZE*c;
       point_time = (buf[3+buffer_offset]<<0) | \
@@ -170,7 +151,7 @@ int _wsp_fetch_archive(FILE *fd, struct wsp_archive_info *archive, time_t from, 
                ((uint64_t)(buf[6+buffer_offset])<<40) | \
                ((uint64_t)(buf[5+buffer_offset])<<48) | \
                ((uint64_t)(buf[4+buffer_offset])<<56);
-        ts->values[i] = *(double*)&temp;
+        memcpy(&ts->values[i], &temp, sizeof(uint64_t));
       }
       i += c;
       current_interval += step;
@@ -259,7 +240,7 @@ int wsp_validate_archive_list() {
 }
 
 /* Main (tests) */
-int main(int argc, char **argv) {
+int main23(int argc, char **argv) {
   /*FILE *my_file;*/
   /*struct wsp_header header;*/
   struct wsp_timeseries ts;
