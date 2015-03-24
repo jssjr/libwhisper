@@ -7,13 +7,17 @@
 #include <string.h>
 #include <time.h>
 #include <endian.h>
+#include <unistd.h>
 
 #define WSP_MAX_ARCHIVES 8
 #define WSP_DATAPOINT_SIZE 12
 #define WSP_HEADER_SIZE 16
 #define WSP_ARCHIVE_INFO_SIZE 12
 #define WSP_READ_CHUNK_SIZE 1020
-#define WSP_GIT_SHA GIT_SHA
+
+#ifndef GIT_SHA
+#define GIT_SHA "none"
+#endif
 
 #if __BYTE_ORDER == __BIG_ENDIAN
 #define Swap2Bytes(val) val
@@ -32,6 +36,7 @@
    (((val) << 40) & 0x00FF000000000000) | (((val) << 56) & 0xFF00000000000000) )
 #endif
 
+
 union {
   uint8_t buf[4];
   float value;
@@ -42,7 +47,7 @@ union {
   double value;
 } u_double;
 
-struct wsp_timeseries {
+struct wsp_archive {
   time_t from;
   time_t until;
   time_t step;
@@ -66,5 +71,7 @@ struct wsp_header {
 };
 
 int wsp_info(FILE *fd, struct wsp_header *header);
+int wsp_fetch(char *path, time_t from, time_t until, struct wsp_archive *ts);
+int wsp_create(char *path, struct wsp_archive *archives, float xff);
 
 #endif

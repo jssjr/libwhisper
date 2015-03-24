@@ -1,4 +1,7 @@
-#include "whisper.h"
+#include "src/whisper.h"
+
+const char* wsp_aggregation_type_map[] = {
+};
 
 int mod(int a, int b)
 {
@@ -6,7 +9,16 @@ int mod(int a, int b)
   return r < 0 ? r + b : r;
 }
 
-int wsp_create() {
+int wsp_create(char *path, struct wsp_archive *archives, float xff) {
+  FILE *fd;
+
+  if (access(path, W_OK ) == -1) {
+    fprintf(stderr, "unable to create file\n");
+    return 1;
+  }
+  fd = fopen(path, "wb");
+
+  fclose(fd);
   return 0;
 }
 
@@ -61,7 +73,7 @@ int wsp_update_many() {
   return 0;
 }
 
-int _wsp_fetch_archive(FILE *fd, struct wsp_archive_info *archive, time_t from, time_t until, struct wsp_timeseries *ts) {
+int _wsp_fetch_archive(FILE *fd, struct wsp_archive_info *archive, time_t from, time_t until, struct wsp_archive *ts) {
   long from_interval, until_interval, base_interval, current_interval;
   long from_offset, until_offset, buffer_offset;
   long step, read_size, chunk_size;
@@ -161,7 +173,7 @@ int _wsp_fetch_archive(FILE *fd, struct wsp_archive_info *archive, time_t from, 
   return 0;
 }
 
-int wsp_fetch(char *path, time_t from, time_t until, struct wsp_timeseries *ts) {
+int wsp_fetch(char *path, time_t from, time_t until, struct wsp_archive *ts) {
   FILE *wsp_file;
   struct wsp_header header;
   time_t now;
@@ -211,7 +223,6 @@ int wsp_fetch(char *path, time_t from, time_t until, struct wsp_timeseries *ts) 
     }
   }
 
-  printf("using archive %d\n", i);
   _wsp_fetch_archive(wsp_file, &header.archives[i], from, until, ts);
 
   fclose(wsp_file);
@@ -236,69 +247,5 @@ int wsp_parse_retention_data() {
 }
 
 int wsp_validate_archive_list() {
-  return 0;
-}
-
-/* Main (tests) */
-int main23(int argc, char **argv) {
-  /*FILE *my_file;*/
-  /*struct wsp_header header;*/
-  struct wsp_timeseries ts;
-  char *filename = "test/mem-free.wsp";
-  int i;
-
-  time_t from;
-  time_t until;
-  time_t pos;
-
-  /*
-  printf("whisper info for %s\n", filename);
-  my_file = fopen(filename, "rb");
-
-  if (wsp_info(my_file, &header) == -1) {
-    return -1;
-  }
-
-  printf("> aggregation type: %lu\n", header.aggregation_type);
-  printf("> max retention:    %lu\n", header.max_retention);
-  printf("> xfilesfactor:     %f\n", header.xff);
-  printf("> archive count:    %lu\n", header.archive_count);
-
-  for (i=0 ; i < header.archive_count ; i++) {
-    printf("> archive %d\n", i);
-    printf(">> offset:            %lu\n", header.archives[i].offset);
-    printf(">> seconds per point: %lu\n", header.archives[i].seconds_per_point);
-    printf(">> points:            %lu\n", header.archives[i].points);
-    printf(">> retention:         %lu\n", header.archives[i].retention);
-    printf(">> size:              %lu\n", header.archives[i].size);
-  }
-
-  fclose(my_file);
-
-  */
-
-  from = 0;
-  time(&until);
-  wsp_fetch(filename, from, until, &ts);
-  for (i = 0, pos = ts.from ; pos < ts.until ; pos += ts.step, i++) {
-    printf("%d\t%f\n", (int)pos, ts.values[i]);
-  }
-
-  time(&from);
-  from = from - 3600;
-  time(&until);
-  wsp_fetch(filename, from, until, &ts);
-  for (i = 0, pos = ts.from ; pos < ts.until ; pos += ts.step, i++) {
-    printf("%d\t%f\n", (int)pos, ts.values[i]);
-  }
-  free(ts.values);
-
-
-  wsp_fetch(filename, 1427083080, 1427083220, &ts);
-  for (i = 0, pos = ts.from ; pos < ts.until ; pos += ts.step, i++) {
-    printf("%d\t%f\n", (int)pos, ts.values[i]);
-  }
-  free(ts.values);
-
   return 0;
 }

@@ -25,7 +25,7 @@ int main(int argc, char **argv) {
   while ((opt = getopt_long(argc, argv, "v", longopts, NULL)) != -1) {
     switch (opt) {
       case 'v':
-        printf("whisper-info %s\n", WSP_GIT_SHA);
+        printf("whisper-info %s\n", GIT_SHA);
         return 0;
       default:
         printf("Usage: %s [--version] path\n", argv[0]);
