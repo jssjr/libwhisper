@@ -47,7 +47,6 @@ whisper_test: $(OBJECTS) $(TEST_OBJ)
 
 test: whisper_test
 	./whisper_test
-	#valgrind ./whisper_test
 
 test: all
 
