@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <endian.h>
+#include <machine/endian.h>
 #include <unistd.h>
 
 #ifndef GIT_SHA
