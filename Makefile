@@ -5,11 +5,14 @@ CFLAGS = -g -Wall -O3 -Wno-strict-aliasing -Isrc -DGIT_SHA=\"$(GIT_SHA)\"
 
 BIN_SRC = $(wildcard *.c)
 BIN_OBJ = $(patsubst %.c, %.o, $(BIN_SRC))
+SHELL_SRC = $(wildcard *.sh)
+
 PROGRAMS = $(patsubst %.c, %, $(BIN_SRC))
+SCRIPTS = $(patsubst %.sh, %, $(SHELL_SRC))
 
 .PHONY: default all clean
 
-default: $(PROGRAMS)
+default: $(PROGRAMS) $(SCRIPTS)
 all: default
 
 SOURCES = \
@@ -26,10 +29,13 @@ TEST_OBJ = $(patsubst %.c, %.o, $(TEST_SRC))
 
 .PRECIOUS: $(TARGET) $(OBJECTS)
 
+$(SCRIPTS):
+	cp $@.sh $@
+	chmod 0755 $@
+
 $(PROGRAMS): $(OBJECTS) $(BIN_OBJ)
-	mkdir -p bin/
 	$(CC) -flto $@.o $(OBJECTS) $(LIBS) -o $@.new
-	mv $@.new bin/$@
+	mv $@.new $@
 
 whisper_test: $(OBJECTS) $(TEST_OBJ)
 	$(CC) $(OBJECTS) $(TEST_OBJ) $(LIBS) -o $@
