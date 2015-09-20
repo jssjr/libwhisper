@@ -24,11 +24,16 @@ valgrind --version >/dev/null 2>&1 || (
   esac
 )
 
-echo
 if [ -n "$missing" ]
 then
+  echo
   echo "Please install $missing"
   exit 1
 fi
 
+echo
+echo "Building whisper..."
+make
+
+echo
 echo "Done!"
