@@ -27,8 +27,9 @@ TEST_OBJ = $(patsubst %.c, %.o, $(TEST_SRC))
 .PRECIOUS: $(TARGET) $(OBJECTS)
 
 $(PROGRAMS): $(OBJECTS) $(BIN_OBJ)
+	mkdir -p bin/
 	$(CC) -flto $@.o $(OBJECTS) $(LIBS) -o $@.new
-	mv $@.new $@
+	mv $@.new bin/$@
 
 whisper_test: $(OBJECTS) $(TEST_OBJ)
 	$(CC) $(OBJECTS) $(TEST_OBJ) $(LIBS) -o $@
