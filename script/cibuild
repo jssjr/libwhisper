@@ -1,0 +1,5 @@
+#!/bin/sh
+
+cd $(dirname $0)/..
+
+./script/bootstrap && ./script/test
