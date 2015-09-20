@@ -30,14 +30,12 @@ TEST_OBJ = $(patsubst %.c, %.o, $(TEST_SRC))
 .PRECIOUS: $(TARGET) $(OBJECTS)
 
 $(SCRIPTS):
-	mkdir -p bin/
-	cp $@.sh bin/$@
-	chmod 0755 bin/$@
+	cp $@.sh $@
+	chmod 0755 $@
 
 $(PROGRAMS): $(OBJECTS) $(BIN_OBJ)
-	mkdir -p bin/
-	$(CC) -flto $@.o $(OBJECTS) $(LIBS) -o bin/$@.new
-	mv bin/$@.new bin/$@
+	$(CC) -flto $@.o $(OBJECTS) $(LIBS) -o $@.new
+	mv $@.new $@
 
 whisper_test: $(OBJECTS) $(TEST_OBJ)
 	$(CC) $(OBJECTS) $(TEST_OBJ) $(LIBS) -o $@
@@ -52,5 +50,4 @@ clean:
 	-rm -f $(OBJECTS)
 	-rm -f $(BIN_OBJ)
 	-rm -f $(TEST_OBJ)
-	-rm -f whisper_test
-	-rm -rf bin
+	-rm -f $(PROGRAMS) whisper_test
