@@ -52,4 +52,5 @@ clean:
 	-rm -f $(OBJECTS)
 	-rm -f $(BIN_OBJ)
 	-rm -f $(TEST_OBJ)
-	-rm -f bin whisper_test
+	-rm -f whisper_test
+	-rm -rf bin
