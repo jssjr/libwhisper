@@ -1,18 +1,15 @@
 GIT_SHA = $(shell git rev-parse --short HEAD)
-TARGET = whisper
 LIBS =
 CC = gcc
 CFLAGS = -g -Wall -O3 -Wno-strict-aliasing -Isrc -DGIT_SHA=\"$(GIT_SHA)\"
 
-# XXX: unused. consider including me in CFLAGS
-WHISPER_CFLAGS += -g -Wall -Werror -Wextra -Wno-unused-parameter \
-		  -Wno-missing-field-initializers -fPIC -D_GNU_SOURCE \
-		  -Wno-deprecated-declarations -std=gnu99 -Os \
-		  -DGIT_SHA='"${GIT_SHA}"'
+BIN_SRC = $(wildcard *.c)
+BIN_OBJ = $(patsubst %.c, %.o, $(BIN_SRC))
+PROGRAMS = $(patsubst %.c, %, $(BIN_SRC))
 
 .PHONY: default all clean
 
-default: $(TARGET)
+default: $(PROGRAMS)
 all: default
 
 SOURCES = \
@@ -29,20 +26,21 @@ TEST_OBJ = $(patsubst %.c, %.o, $(TEST_SRC))
 
 .PRECIOUS: $(TARGET) $(OBJECTS)
 
-$(TARGET): $(OBJECTS) whisper.o
-	$(CC) -flto whisper.o $(OBJECTS) $(LIBS) -o $@.new
+$(PROGRAMS): $(OBJECTS) $(BIN_OBJ)
+	$(CC) -flto $@.o $(OBJECTS) $(LIBS) -o $@.new
 	mv $@.new $@
 
-$(TARGET)_test: $(OBJECTS) $(TEST_OBJ)
+whisper_test: $(OBJECTS) $(TEST_OBJ)
 	$(CC) $(OBJECTS) $(TEST_OBJ) $(LIBS) -o $@
 
-test: $(TARGET)_test
-	./$(TARGET)_test
-	#valgrind ./wsptest
+test: whisper_test
+	./whisper_test
+	#valgrind ./whisper_test
 
 test: all
 
 clean:
-	-rm -f $(OBJECTS) whisper.o
+	-rm -f $(OBJECTS)
+	-rm -f $(BIN_OBJ)
 	-rm -f $(TEST_OBJ)
-	-rm -f $(TARGET) $(TARGET)_test
+	-rm -f $(PROGRAMS) whisper_test
