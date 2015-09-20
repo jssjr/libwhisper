@@ -3,6 +3,7 @@ whisper
 whisper-info
 whisper-fetch
 whisper-create
+whisper-update
 *.o
 *.swp
 *~

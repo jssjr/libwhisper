@@ -65,11 +65,20 @@ int wsp_info(FILE *fd, struct wsp_header *header) {
   return 0;
 }
 
-int wsp_update() {
+int wsp_update(char *path, double value, time_t timestamp) {
+  struct wsp_datapoint datapoints[1];
+
+  wsp_update_many(path, datapoints, 1);
   return 0;
 }
 
-int wsp_update_many() {
+int wsp_update_many(char *path, struct wsp_datapoint *datapoints, int num_datapoints) {
+  struct wsp_datapoint *datapoint;
+
+  for (int i=0; i<num_datapoints; i++) {
+    datapoint = &datapoints[i];
+    printf("asked to update: %ld\t%f\n", datapoint->timestamp, datapoint->value);
+  }
   return 0;
 }
 
