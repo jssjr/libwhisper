@@ -1,19 +1,13 @@
-#ifndef __LIBWHISPER__
-#define __LIBWHISPER__
+#ifndef __WHISPER__H_
+#define __WHISPER__H_
 
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <endian.h>
+#include <machine/endian.h>
 #include <unistd.h>
-
-#define WSP_MAX_ARCHIVES 8
-#define WSP_DATAPOINT_SIZE 12
-#define WSP_HEADER_SIZE 16
-#define WSP_ARCHIVE_INFO_SIZE 12
-#define WSP_READ_CHUNK_SIZE 1020
 
 #ifndef GIT_SHA
 #define GIT_SHA "none"
@@ -36,7 +30,6 @@
    (((val) << 40) & 0x00FF000000000000) | (((val) << 56) & 0xFF00000000000000) )
 #endif
 
-
 union {
   uint8_t buf[4];
   float value;
@@ -47,31 +40,6 @@ union {
   double value;
 } u_double;
 
-struct wsp_archive {
-  time_t from;
-  time_t until;
-  time_t step;
-  double *values;
-};
-
-struct wsp_archive_info {
-  long offset;
-  long seconds_per_point;
-  long points;
-  long retention;
-  long size;
-};
-
-struct wsp_header {
-  long aggregation_type;
-  long max_retention;
-  float xff;
-  long archive_count;
-  struct wsp_archive_info archives[WSP_MAX_ARCHIVES];
-};
-
-int wsp_info(FILE *fd, struct wsp_header *header);
-int wsp_fetch(char *path, time_t from, time_t until, struct wsp_archive *ts);
-int wsp_create(char *path, struct wsp_archive *archives, float xff);
+#include "libwhisper.h"
 
 #endif
