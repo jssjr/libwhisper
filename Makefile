@@ -5,12 +5,18 @@ CFLAGS = -g -Wall -O3 -Wno-strict-aliasing -Isrc -DGIT_SHA=\"$(GIT_SHA)\"
 
 BIN_SRC = $(wildcard *.c)
 BIN_OBJ = $(patsubst %.c, %.o, $(BIN_SRC))
+SHELL_SRC = $(wildcard *.sh)
+
 PROGRAMS = $(patsubst %.c, %, $(BIN_SRC))
+SCRIPTS = $(patsubst %.sh, %, $(SHELL_SRC))
 
 .PHONY: default all clean
 
-default: $(PROGRAMS)
+default: debug $(PROGRAMS) $(SCRIPTS)
 all: default
+
+debug:
+	echo $(SCRIPTS)
 
 SOURCES = \
 	src/libwhisper.c
@@ -26,10 +32,15 @@ TEST_OBJ = $(patsubst %.c, %.o, $(TEST_SRC))
 
 .PRECIOUS: $(TARGET) $(OBJECTS)
 
+$(SCRIPTS):
+	mkdir -p bin/
+	cp $@.sh bin/$@
+	chmod 0755 bin/$@
+
 $(PROGRAMS): $(OBJECTS) $(BIN_OBJ)
 	mkdir -p bin/
-	$(CC) -flto $@.o $(OBJECTS) $(LIBS) -o $@.new
-	mv $@.new bin/$@
+	$(CC) -flto $@.o $(OBJECTS) $(LIBS) -o bin/$@.new
+	mv bin/$@.new bin/$@
 
 whisper_test: $(OBJECTS) $(TEST_OBJ)
 	$(CC) $(OBJECTS) $(TEST_OBJ) $(LIBS) -o $@
@@ -44,4 +55,4 @@ clean:
 	-rm -f $(OBJECTS)
 	-rm -f $(BIN_OBJ)
 	-rm -f $(TEST_OBJ)
-	-rm -f $(PROGRAMS) whisper_test
+	-rm -f bin whisper_test
