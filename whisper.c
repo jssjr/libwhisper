@@ -25,5 +25,6 @@ int main(int argc, char **argv) {
   }
 
   fclose(my_file);
+
   return 0;
 }

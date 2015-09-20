@@ -4,3 +4,5 @@ whisper
 *~
 .DS_Store
 build/*
+tags
+bin/*

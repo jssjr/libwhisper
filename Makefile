@@ -4,6 +4,12 @@ LIBS =
 CC = gcc
 CFLAGS = -g -Wall -O3 -Wno-strict-aliasing -Isrc -DGIT_SHA=\"$(GIT_SHA)\"
 
+# XXX: unused. consider including me in CFLAGS
+WHISPER_CFLAGS += -g -Wall -Werror -Wextra -Wno-unused-parameter \
+		  -Wno-missing-field-initializers -fPIC -D_GNU_SOURCE \
+		  -Wno-deprecated-declarations -std=gnu99 -Os \
+		  -DGIT_SHA='"${GIT_SHA}"'
+
 .PHONY: default all clean
 
 default: $(TARGET)
