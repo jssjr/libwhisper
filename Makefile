@@ -12,11 +12,8 @@ SCRIPTS = $(patsubst %.sh, %, $(SHELL_SRC))
 
 .PHONY: default all clean
 
-default: debug $(PROGRAMS) $(SCRIPTS)
+default: $(PROGRAMS) $(SCRIPTS)
 all: default
-
-debug:
-	echo $(SCRIPTS)
 
 SOURCES = \
 	src/libwhisper.c
