@@ -8,21 +8,6 @@ gcc --version >/dev/null 2>&1 || (
   missing="gcc ${missing}"
   echo "MISSING: gcc"
 )
-valgrind --version >/dev/null 2>&1 || (
-  missing="valgrind ${missing}"
-  echo "MISSING: valgrind"
-  case "$(uname -s)" in
-  Darwin)
-    case "$(sw_vers -productVersion)" in
-    10.10.*) brew install --HEAD valgrind ;;
-    *)       brew install valgrind ;;
-    esac
-    ;;
-  *)
-    echo &>2 "I don't know how to install valgrind on $(uname -s)."
-    exit 1
-  esac
-)
 
 if [ -n "$missing" ]
 then
