@@ -6,8 +6,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <endian.h>
 #include <unistd.h>
+
+#ifdef _DARWIN_SOURCE
+#include <machine/endian.h>
+#else
+#include <endian.h>
+#endif
 
 #ifndef GIT_SHA
 #define GIT_SHA "none"

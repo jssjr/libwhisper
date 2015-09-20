@@ -3,6 +3,11 @@ LIBS =
 CC = gcc
 CFLAGS = -g -Wall -O3 -Wno-strict-aliasing -Isrc -DGIT_SHA=\"$(GIT_SHA)\"
 
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Darwin)
+  CFLAGS += -D_DARWIN_SOURCE
+endif
+
 BIN_SRC = $(wildcard *.c)
 BIN_OBJ = $(patsubst %.c, %.o, $(BIN_SRC))
 SHELL_SRC = $(wildcard *.sh)
