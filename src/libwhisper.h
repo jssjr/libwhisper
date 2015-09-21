@@ -39,6 +39,7 @@ int wsp_create(char *path, struct wsp_archive *archives, float xff);
 int wsp_info(FILE *fd, struct wsp_header *header);
 int wsp_update(char *path, double value, time_t timestamp);
 int wsp_update_many(char *path, struct wsp_datapoint *datapoints, int num_datapoints);
+int wsp_file_update_many(FILE *fd, struct wsp_datapoint *datapoints, int num_datapoints);
 int wsp_fetch(char *path, time_t from, time_t until, struct wsp_archive *ts);
 int wsp_file_fetch();
 int wsp_aggregation_methods();

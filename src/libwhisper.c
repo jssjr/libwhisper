@@ -3,8 +3,7 @@
 const char* wsp_aggregation_type_map[] = {
 };
 
-int mod(int a, int b)
-{
+int mod(int a, int b) {
   int r = a % b;
   return r < 0 ? r + b : r;
 }
@@ -72,7 +71,7 @@ int wsp_update(char *path, double value, time_t timestamp) {
   return 0;
 }
 
-int wsp_update_many(char *path, struct wsp_datapoint *datapoints, int num_datapoints) {
+int wsp_file_update_many(FILE *fd, struct wsp_datapoint *datapoints, int num_datapoints) {
   struct wsp_datapoint *datapoint;
 
   for (int i=0; i<num_datapoints; i++) {
@@ -80,6 +79,24 @@ int wsp_update_many(char *path, struct wsp_datapoint *datapoints, int num_datapo
     printf("asked to update: %ld\t%f\n", datapoint->timestamp, datapoint->value);
   }
   return 0;
+}
+
+int wsp_update_many(char *path, struct wsp_datapoint *datapoints, int num_datapoints) {
+  FILE *fd;
+  int retcode;
+
+  // XXX: Needs to flock around this
+
+  if (access(path, W_OK ) == -1) {
+    fprintf(stderr, "unable to open whisper file %s\n", path);
+    return 1;
+  }
+  fd = fopen(path, "wb");
+
+  retcode = wsp_file_update_many(fd, datapoints, num_datapoints);
+
+  fclose(fd);
+  return retcode;
 }
 
 int _wsp_fetch_archive(FILE *fd, struct wsp_archive_info *archive, time_t from, time_t until, struct wsp_archive *ts) {
