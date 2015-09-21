@@ -62,8 +62,8 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    datapoints[i].timestamp = (time_t)timestamp;
-    datapoints[i].value = value;
+    (datapoints+i)->timestamp = (time_t)timestamp;
+    (datapoints+i)->value = value;
   }
 
   return wsp_update_many(path, datapoints, num_datapoints);
