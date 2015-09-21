@@ -79,6 +79,53 @@ int _datapoint_comp(const struct wsp_datapoint *a, const struct wsp_datapoint *b
   return 0;
 }
 
+int _wsp_archive_update_many(FILE *fd, struct wsp_header *header, int archive_index, struct wsp_datapoint *datapoints, int start_pos, int stop_pos) {
+  int step;
+  time_t last_ts;
+  int buf_size;
+  uint8_t datapoint_buf[WSP_DATAPOINT_SIZE];
+  uint8_t buf[WSP_DATAPOINT_SIZE*WSP_WRITE_CHUNK_SIZE];
+
+  step = header->archives[archive_index].seconds_per_point;
+
+  /*
+   * iterate through datapoints
+   *   if last point's timestamp is older than step size then
+   *     write datapoint_buf
+   *   else
+   *     add datapoint to datapoint_buf
+   *   end
+   * end
+   * apply rollups
+   */
+
+  printf("start: %d stop: %d step: %d\n", start_pos, stop_pos, step);
+  last_ts = 0;
+  buf_size = 0;
+  for (int i=start_pos; i<stop_pos; i++) {
+    if (last_ts == 0) {
+      last_ts = (datapoints+1)->timestamp - step + 1;
+    }
+    printf("considering %ld:%f last_ts=%ld\n", (datapoints+i)->timestamp, (datapoints+i)->value, last_ts);
+    if (buf_size+1 > WSP_WRITE_CHUNK_SIZE) {
+      // no more room in the buffer
+      printf("write overflow buffer\n");
+    }
+    // add point
+    printf("add point to buffer (size=%d chunk_size=%d)\n", buf_size, WSP_WRITE_CHUNK_SIZE);
+    if ((datapoints+1)->timestamp - last_ts > step) {
+      // if we're no longer contiguous
+      printf("write buffer\n");
+    }
+    buf_size += 1;
+    last_ts = (datapoints+1)->timestamp;
+  }
+  // if anything is left, write it
+  printf("write final buffer\n");
+
+  return 0;
+}
+
 int wsp_file_update_many(FILE *fd, struct wsp_datapoint *datapoints, int num_datapoints) {
   struct wsp_header header;
   time_t now;
@@ -101,10 +148,11 @@ int wsp_file_update_many(FILE *fd, struct wsp_datapoint *datapoints, int num_dat
 
     while (age > header.archives[archive_index].retention) {
       if (start_pos < i) {
+        /* we've reached the limit of datapoints for this archive, so store them */
         for (int c=start_pos; c<i; c++) {
-          /* we've reached the limit of datapoints for this archive, so store them */
           printf("asked to update: %ld\t%f\n", (datapoints+c)->timestamp, (datapoints+c)->value);
         }
+        _wsp_archive_update_many(fd, &header, archive_index, datapoints, start_pos, i);
       }
       start_pos = i;
       archive_index++;

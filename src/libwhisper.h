@@ -6,6 +6,7 @@
 #define WSP_HEADER_SIZE 16
 #define WSP_ARCHIVE_INFO_SIZE 12
 #define WSP_READ_CHUNK_SIZE 1020
+#define WSP_WRITE_CHUNK_SIZE 1020
 
 struct wsp_datapoint {
   time_t timestamp;
