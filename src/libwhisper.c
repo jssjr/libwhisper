@@ -74,7 +74,7 @@ int wsp_update(char *path, double value, time_t timestamp) {
 }
 
 int _datapoint_comp(const struct wsp_datapoint *a, const struct wsp_datapoint *b) {
-  if (a->timestamp > b->timestamp) return 1;
+  if (a->timestamp > b->timestamp) return -1;
   if (a->timestamp < b->timestamp) return 1;
   return 0;
 }
@@ -109,6 +109,7 @@ int wsp_file_update_many(FILE *fd, struct wsp_datapoint *datapoints, int num_dat
       }
       start_pos = i;
       archive_index++;
+      printf("jumping to archive %d\n", archive_index);
       if (archive_index >= header.archive_count) {
         /* we'll skip datapoints from now on, because we can't hold them */
         /* return the current index as the number of committed points */
