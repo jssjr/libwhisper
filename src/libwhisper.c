@@ -73,10 +73,20 @@ int wsp_update(char *path, double value, time_t timestamp) {
 
 int wsp_file_update_many(FILE *fd, struct wsp_datapoint *datapoints, int num_datapoints) {
   struct wsp_datapoint *datapoint;
+  struct wsp_header header;
+  time_t now;
+
+  time(&now);
 
   for (int i=0; i<num_datapoints; i++) {
     datapoint = &datapoints[i];
+
     printf("asked to update: %ld\t%f\n", datapoint->timestamp, datapoint->value);
+
+    if (wsp_info(fd, &header) == -1) {
+      return 1;
+    }
+
   }
   return 0;
 }
@@ -91,7 +101,7 @@ int wsp_update_many(char *path, struct wsp_datapoint *datapoints, int num_datapo
     fprintf(stderr, "unable to open whisper file %s\n", path);
     return 1;
   }
-  fd = fopen(path, "wb");
+  fd = fopen(path, "ab+");
 
   retcode = wsp_file_update_many(fd, datapoints, num_datapoints);
 
