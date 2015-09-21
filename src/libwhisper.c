@@ -86,14 +86,13 @@ int wsp_file_update_many(FILE *fd, struct wsp_datapoint *datapoints, int num_dat
   int archive_index;
   int start_pos;
 
-  time(&now);
-
   qsort(datapoints, num_datapoints, sizeof(struct wsp_datapoint), (compfn)_datapoint_comp);
 
   if (wsp_info(fd, &header) == -1) {
     return 1;
   }
 
+  time(&now);
   archive_index = 0;
   start_pos = 0;
 
