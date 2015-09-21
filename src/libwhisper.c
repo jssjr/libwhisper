@@ -71,21 +71,34 @@ int wsp_update(char *path, double value, time_t timestamp) {
   return 0;
 }
 
+typedef int (*compfn)(const void*, const void*);
+
+int _datapoint_comp(const struct wsp_datapoint *a, const struct wsp_datapoint *b) {
+  if (a->timestamp > b->timestamp) return 1;
+  if (a->timestamp < b->timestamp) return 1;
+  return 0;
+}
+
 int wsp_file_update_many(FILE *fd, struct wsp_datapoint *datapoints, int num_datapoints) {
   struct wsp_datapoint *datapoint;
   struct wsp_header header;
   time_t now;
+  int age;
 
   time(&now);
+
+  qsort(datapoints, num_datapoints, sizeof(struct wsp_datapoint), (compfn)_datapoint_comp);
+
+  if (wsp_info(fd, &header) == -1) {
+    return 1;
+  }
 
   for (int i=0; i<num_datapoints; i++) {
     datapoint = &datapoints[i];
 
     printf("asked to update: %ld\t%f\n", datapoint->timestamp, datapoint->value);
 
-    if (wsp_info(fd, &header) == -1) {
-      return 1;
-    }
+    age = now - datapoint->timestamp;
 
   }
   return 0;
