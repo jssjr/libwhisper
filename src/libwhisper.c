@@ -3,6 +3,8 @@
 const char* wsp_aggregation_type_map[] = {
 };
 
+typedef int (*compfn)(const void*, const void*);
+
 int mod(int a, int b) {
   int r = a % b;
   return r < 0 ? r + b : r;
@@ -70,8 +72,6 @@ int wsp_update(char *path, double value, time_t timestamp) {
   wsp_update_many(path, datapoints, 1);
   return 0;
 }
-
-typedef int (*compfn)(const void*, const void*);
 
 int _datapoint_comp(const struct wsp_datapoint *a, const struct wsp_datapoint *b) {
   if (a->timestamp > b->timestamp) return 1;
