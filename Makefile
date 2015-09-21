@@ -1,7 +1,7 @@
 GIT_SHA = $(shell git rev-parse --short HEAD)
 LIBS =
 CC = gcc
-CFLAGS = -g -Wall -O3 -Wno-strict-aliasing -Isrc -DGIT_SHA=\"$(GIT_SHA)\"
+CFLAGS = -g -Wall -O0 -Wno-strict-aliasing -Isrc -DGIT_SHA=\"$(GIT_SHA)\"
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Darwin)

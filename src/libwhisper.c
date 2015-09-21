@@ -80,10 +80,11 @@ int _datapoint_comp(const struct wsp_datapoint *a, const struct wsp_datapoint *b
 }
 
 int wsp_file_update_many(FILE *fd, struct wsp_datapoint *datapoints, int num_datapoints) {
-  struct wsp_datapoint *datapoint;
   struct wsp_header header;
   time_t now;
   int age;
+  int archive_index;
+  int start_pos;
 
   time(&now);
 
@@ -93,20 +94,34 @@ int wsp_file_update_many(FILE *fd, struct wsp_datapoint *datapoints, int num_dat
     return 1;
   }
 
+  archive_index = 0;
+  start_pos = 0;
+
   for (int i=0; i<num_datapoints; i++) {
-    datapoint = &datapoints[i];
+    age = now - (datapoints+i)->timestamp;
 
-    printf("asked to update: %ld\t%f\n", datapoint->timestamp, datapoint->value);
-
-    age = now - datapoint->timestamp;
-
+    while (age > header.archives[archive_index].retention) {
+      if (start_pos < i) {
+        for (int c=start_pos; c<i; c++) {
+          /* we've reached the limit of datapoints for this archive, so store them */
+          printf("asked to update: %ld\t%f\n", (datapoints+c)->timestamp, (datapoints+c)->value);
+        }
+      }
+      start_pos = i;
+      archive_index++;
+      if (archive_index >= header.archive_count) {
+        /* we'll skip datapoints from now on, because we can't hold them */
+        /* return the current index as the number of committed points */
+        return i;
+      }
+    }
   }
-  return 0;
+  return num_datapoints;
 }
 
 int wsp_update_many(char *path, struct wsp_datapoint *datapoints, int num_datapoints) {
   FILE *fd;
-  int retcode;
+  int num_updated;
 
   // XXX: Needs to flock around this
 
@@ -116,10 +131,12 @@ int wsp_update_many(char *path, struct wsp_datapoint *datapoints, int num_datapo
   }
   fd = fopen(path, "ab+");
 
-  retcode = wsp_file_update_many(fd, datapoints, num_datapoints);
+  if ((num_updated = wsp_file_update_many(fd, datapoints, num_datapoints)) < num_datapoints) {
+    printf("skipped %d datapoints\n", num_datapoints - num_updated);
+  }
 
   fclose(fd);
-  return retcode;
+  return 0;
 }
 
 int _wsp_fetch_archive(FILE *fd, struct wsp_archive_info *archive, time_t from, time_t until, struct wsp_archive *ts) {
